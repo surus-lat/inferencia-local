@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Inferencia local · tus demos — SURUS</title>
+<meta name="description" content="Launcher de las demos locales de inferencia: carga y descarga de modelos, presupuesto de RAM y acceso a las 5 webapps.">
+<link rel="icon" href="/assets/surus/surus-symbol.svg">
+<link rel="stylesheet" href="/assets/surus/tokens.css">
+<link rel="stylesheet" href="/assets/surus/fonts.css">
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body class="shell">
+
+<header class="site-header">
+  <img class="lockup" src="/assets/surus/surus-lockup-on-dark.svg" width="105" height="26" alt="SURUS">
+  <span class="header-sep" aria-hidden="true"></span>
+  <span class="header-title">Inferencia local · tus demos</span>
+  <span class="header-note">hub 127.0.0.1:8180</span>
+  <span class="header-right">
+    <span class="mono" id="hub-state">conectando…</span>
+    <span class="dot" id="hub-dot" aria-hidden="true"></span>
+    <a class="header-link" href="/api/state" target="_blank" rel="noopener">/api/state</a>
+  </span>
+</header>
+
+<main class="page">
+
+  <!-- ================================================== encabezado de página -->
+  <section class="page-head">
+    <p class="eyebrow">Clase UBA · 60 min · hands-on · CPU-only, sin nube</p>
+    <h1 class="h1">Subí los modelos al presupuesto de RAM y <span class="hl">abrí la demo</span>.</h1>
+    <p class="lead">
+      Los pesos viven en esta laptop: un i5-10310U con 14 GB de RAM y sin GPU. Cargá y descargá
+      cada modelo cuando lo necesites, mirá cuánto ocupa de verdad y después entrá a la demo.
+      El hub habla sólo con <span class="mono mono-strong">127.0.0.1</span>: nada de tu dato sale de acá.
+    </p>
+  </section>
+
+  <!-- ======================================================== medidor de RAM -->
+  <section class="panel" aria-labelledby="ram-title">
+    <div class="panel-head">
+      <h2 class="panel-title" id="ram-title">RAM · presupuesto de modelos</h2>
+      <span class="panel-tools mono" id="ram-updated">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="ram-meter" id="ram"></div>
+      <div class="chip-row" id="ram-quick"></div>
+    </div>
+  </section>
+
+  <div class="two-col">
+
+    <!-- ============================================================ modelos -->
+    <section class="panel" aria-labelledby="models-title">
+      <div class="panel-head">
+        <h2 class="panel-title" id="models-title">Modelos</h2>
+        <span class="panel-tools mono">6 disponibles · switch para cargar / descargar</span>
+      </div>
+      <div class="panel-body">
+        <div class="notice" id="load-notice" hidden></div>
+        <div class="table-scroll">
+          <table class="model-table">
+            <thead>
+              <tr>
+                <th scope="col">Modelo</th>
+                <th scope="col">Params · cuant</th>
+                <th scope="col">En disco</th>
+                <th scope="col">RAM est.</th>
+                <th scope="col">Engine · puerto</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="model-rows"></tbody>
+          </table>
+        </div>
+        <p class="small" id="models-hint">
+          La RAM estimada es lo que mide el backend en esta máquina; el peso en disco es el archivo
+          GGUF o el checkpoint. Si una carga no entra en el presupuesto, el hub la rechaza y te lo decimos acá.
+        </p>
+      </div>
+    </section>
+
+    <!-- ====================================================== barra lateral -->
+    <aside class="aside-col">
+
+      <section class="panel" aria-labelledby="rule-title">
+        <div class="panel-head">
+          <h2 class="panel-title" id="rule-title">La cuenta que manda</h2>
+        </div>
+        <div class="panel-body">
+          <div class="fact-list">
+            <div class="fact">
+              <span class="fact-k">Regla de la casa</span>
+              <span class="fact-v">No más de ~4 GB en modelos a la vez.</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">Parámetros × bytes por parámetro</span>
+              <span class="fact-v">Esa es toda la cuenta inicial. Lo que no entra, no corre.</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">El cuello es la memoria</span>
+              <span class="fact-v">En decode releés todos los pesos por token: cuantizar acelera en el mismo hardware.</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">Lo que vas a medir</span>
+              <span class="fact-mono">TTFT · TPOT · prefill / decode · tok-per-s · RTF</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="api-title">
+        <div class="panel-head">
+          <h2 class="panel-title" id="api-title">Cómo se mueve</h2>
+        </div>
+        <div class="panel-body">
+          <div class="fact-list">
+            <div class="fact">
+              <span class="fact-k">Estado</span>
+              <span class="fact-mono">GET /api/state · cada 1,5 s</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">Cargar / descargar</span>
+              <span class="fact-mono">POST /api/models/{id}/load · /unload</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">Log del backend</span>
+              <span class="fact-mono">GET /api/log/{id}?n=200</span>
+            </div>
+            <div class="fact">
+              <span class="fact-k">pi contra el hub</span>
+              <span class="fact-mono">pi --provider openai --model &lt;id&gt; --api-base-url http://127.0.0.1:8180/v1/proxy/&lt;id&gt;</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+
+  <!-- ============================================================== demos -->
+  <section class="panel" aria-labelledby="demos-title">
+    <div class="panel-head">
+      <h2 class="panel-title" id="demos-title">Las 5 demos</h2>
+      <span class="panel-tools mono">cada una pide lo que necesita · el hub no habla con la nube</span>
+    </div>
+    <div class="panel-body">
+      <div class="demo-grid" id="demo-grid"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <span class="foot-strong">SURUS · Inferencia local</span>
+  <span>UBA · nov 2026 · 60 minutos, 5 demos</span>
+  <span class="foot-right">los pesos no viajan: todo queda en 127.0.0.1</span>
+</footer>
+
+<!-- overlay del log: Deep sobre Ink + bordes, sin sombras -->
+<div class="log-modal" id="log-modal" hidden>
+  <div class="log-panel">
+    <div class="log-head">
+      <span class="log-title" id="log-title">log</span>
+      <span class="log-tools">
+        <button class="btn btn--sm" type="button" id="log-refresh">refrescar</button>
+        <button class="btn btn--sm btn--ghost" type="button" id="log-close">cerrar</button>
+      </span>
+    </div>
+    <pre class="log-lines" id="log-lines">—</pre>
+  </div>
+</div>
+
+<script src="/assets/app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.Surus;
+
+  /* ------------------------------------------------- esqueleto sin hub (SPEC) */
+
+  var MODEL_FALLBACK = [
+    { id: 'onejev-vlm',      label: 'OneJev 1.6 · dedos',       kind: 'llama-server', src: 'OneJev1.6-0.8B.Q4_K_M.gguf + mmproj-Q8_0', params: 8e8,   quant: 'Q4_K_M', size_mb: 645, est_ram_mb: 1150, port: 8181, status: 'off' },
+    { id: 'lfm3-1.7b',       label: 'LFM3 1.7B · chat/pi',      kind: 'llama-server', src: 'LFM3-1.7B-Q4_K_M.gguf',                    params: 1.7e9, quant: 'Q4_K_M', size_mb: 1100, est_ram_mb: 1800, port: 8182, status: 'off' },
+    { id: 'mnn-pocket',      label: 'MNN-Pocket 0.3B · rápido', kind: 'llama-server', src: 'MNN-Pocket-0.3B-Q4_1.gguf',                 params: 3e8,   quant: 'Q4_1',   size_mb: 192,  est_ram_mb: 450,  port: 8183, status: 'off' },
+    { id: 'parakeet-ultra',  label: 'parakeet-ultra · ASR',     kind: 'worker C++',   src: 'parakeet-ultra-Q4_K_M.gguf',                params: null,  quant: 'Q4_K_M', size_mb: 486,  est_ram_mb: 900,  port: null, status: 'off' },
+    { id: 'embeddinggemma',  label: 'EmbeddingGemma-2',         kind: 'llama-server --embedding', src: 'embeddinggemma-2-Q8_0.gguf',    params: 3e8,   quant: 'Q8_0',   size_mb: 310,  est_ram_mb: 450,  port: 8185, status: 'off' },
+    { id: 'yolo',            label: 'YOLO26s · webcam',         kind: 'ultralytics in-process', src: 'yolo26s.pt',                      params: null,  quant: 'fp',     size_mb: 20,   est_ram_mb: 900,  port: null, status: 'off' }
+  ];
+
+  var DEMO_FALLBACK = [
+    { id: 'dedos', path: '/d/dedos', title: 'Dedos', kicker: 'VLM en vivo',
+      tagline: 'Levantá la mano: el VLM mira el frame y devuelve un dígito (0–5) con gramática forzada. Prefill de imagen ≈2,6 s; con la imagen repetida el KV cache lo baja a ≈0,15 s.',
+      models: ['onejev-vlm'] },
+    { id: 'llm', path: '/d/llm', title: 'LLM en vivo', kicker: 'servido para pi', any_of: true,
+      tagline: 'El mismo modelo que contestás desde `pi`, con prefill y decode a la vista: un 1,7 B thinking o un 0,3 B rápido.',
+      models: ['lfm3-1.7b', 'mnn-pocket'] },
+    { id: 'asr', path: '/d/asr', title: 'Transcripción en vivo', kicker: 'parakeet-ultra',
+      tagline: 'VAD por energía y ventanas de 2–8 s. parakeet-ultra Q4 corre a 7× tiempo real y devuelve timestamps y probabilidad por palabra.',
+      models: ['parakeet-ultra'] },
+    { id: 'search', path: '/d/search', title: 'Búsqueda semántica', kicker: 'RI CONICET',
+      tagline: 'Preguntale a 294.595 filas del repositorio institucional con embeddings de 768 dims. Escaneás del 1 % al total y ves el costo.',
+      models: ['embeddinggemma'] },
+    { id: 'yolo', path: '/d/yolo', title: 'Detección con webcam', kicker: 'ultralytics',
+      tagline: 'YOLO26s a 640 px sobre la webcam: ≈160 ms por frame (6 FPS), sin GPU y con conteos por clase.',
+      models: ['yolo'] }
+  ];
+
+  /* -------------------------------------------------------------- estado UI */
+
+  var pending = {};          // id -> 'load' | 'unload'
+  var notice = null;         // {text, kind, at}
+  var hubOk = null;          // null = todavía no sabemos
+  var lastState = null;
+  var logId = null;
+
+  var $rows = document.getElementById('model-rows');
+  var $ram = document.getElementById('ram');
+  var $ramQuick = document.getElementById('ram-quick');
+  var $ramUpdated = document.getElementById('ram-updated');
+  var $notice = document.getElementById('load-notice');
+  var $grid = document.getElementById('demo-grid');
+  var $hubState = document.getElementById('hub-state');
+  var $hubDot = document.getElementById('hub-dot');
+  var $logModal = document.getElementById('log-modal');
+  var $logTitle = document.getElementById('log-title');
+  var $logLines = document.getElementById('log-lines');
+
+  /* --------------------------------------------------------------- helpers */
+
+  function fmtParams(p) {
+    if (p === null || p === undefined || p === '') return '—';
+    if (typeof p === 'number') {
+      if (p >= 1e9) return S.fmtNum(p / 1e9, 2) + ' B';
+      if (p >= 1e6) return S.fmtNum(p / 1e6, 1) + ' M';
+      return String(p);
+    }
+    return String(p);
+  }
+
+  function showNotice(text, kind) {
+    notice = { text: text, kind: kind || 'warn', at: Date.now() };
+    renderNotice();
+  }
+
+  function renderNotice() {
+    if (!notice || (Date.now() - notice.at > 20000)) {
+      $notice.hidden = true;
+      $notice.innerHTML = '';
+      return;
+    }
+    $notice.hidden = false;
+    $notice.className = 'notice notice--' + notice.kind;
+    $notice.innerHTML = S.esc(notice.text);
+  }
+
+  function switchHTML(m) {
+    var on = (m.status === 'ready' || m.status === 'busy');
+    var busy = (m.status === 'loading') || !!pending[m.id];
+    var label = busy ? 'cargando' : (on ? 'descargar' : 'cargar');
+    return '<button class="switch' + (on ? ' is-on' : '') + (busy ? ' is-busy' : '') + '"' +
+      ' type="button" role="switch" aria-checked="' + (on ? 'true' : 'false') + '"' +
+      (busy ? ' disabled' : '') +
+      ' data-toggle="' + S.esc(m.id) + '"' +
+      ' aria-label="' + S.esc((on ? 'Descargar ' : 'Cargar ') + (m.label || m.id)) + '">' +
+      '<span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>' +
+      '<span class="switch-label">' + S.esc(label) + '</span></button>';
+  }
+
+  function rowHTML(m) {
+    var on = (m.status === 'ready' || m.status === 'busy');
+    var port = (m.port === null || m.port === undefined || m.port === '') ? 'sin puerto' : ':' + m.port;
+    var metric = '';
+    if (m.status === 'ready' && m.ready_ms) metric += 'listo en ' + S.fmtMs(m.ready_ms);
+    var extra = S.metricsSummary(m.metrics, 3);
+    if (extra) metric += (metric ? ' · ' : '') + extra;
+    var err = (m.status === 'error' && m.last_error) ? String(m.last_error) : '';
+
+    return '<tr data-id="' + S.esc(m.id) + '"' + (on ? ' class="is-loaded"' : '') + '>' +
+      '<td class="cell-id">' +
+        '<span class="m-label">' + S.esc(m.label || m.id) + '</span>' +
+        '<span class="m-id">' + S.esc(m.id) + '</span>' +
+      '</td>' +
+      '<td class="num">' + S.esc(fmtParams(m.params)) + ' · ' + S.esc(m.quant || '—') + '</td>' +
+      '<td class="num">' + S.esc(S.fmtMb(m.size_mb)) + '</td>' +
+      '<td class="num num--strong">' + S.esc(S.fmtMb(m.est_ram_mb)) + '</td>' +
+      '<td class="engine">' +
+        '<span class="m-kind">' + S.esc(m.kind || 'engine') + ' · ' + S.esc(port) + '</span>' +
+        '<span class="m-src">' + S.esc(m.src || '') + '</span>' +
+      '</td>' +
+      '<td><div class="status-cell">' + S.badgeHTML(m.status, m.last_error) +
+        (metric ? '<span class="metrics-line">' + S.esc(metric) + '</span>' : '') +
+        (err ? '<span class="error-line">' + S.esc(err.slice(0, 120)) + '</span>' : '') +
+      '</div></td>' +
+      '<td><div class="btn-row">' + switchHTML(m) +
+        '<button class="btn btn--sm" type="button" data-log="' + S.esc(m.id) + '">ver log</button>' +
+      '</div></td>' +
+    '</tr>';
+  }
+
+  function demoNeeds(demo, byId) {
+    var need = demo.models || [];
+    if (!need.length) return { ok: true, missing: [] };
+    var missing = need.filter(function (id) {
+      var m = byId[id];
+      return !(m && (m.status === 'ready' || m.status === 'busy'));
+    });
+    var ok = demo.any_of ? (need.length - missing.length) > 0 : missing.length === 0;
+    return { ok: ok, missing: missing };
+  }
+
+  function demoCardHTML(demo, index, byId) {
+    var need = demoNeeds(demo, byId);
+    var path = demo.path || ('/d/' + demo.id);
+
+    var needs = need.missing.length ? need.missing.map(function (id) {
+      var m = byId[id] || { id: id, status: 'unknown' };
+      return '<div class="demo-need-row">' +
+        '<span class="chip">' + S.esc(id) + '</span>' + S.badgeHTML(m.status, m.last_error) +
+        '<button class="btn btn--sm" type="button" data-load="' + S.esc(id) + '"' +
+        ((m.status === 'loading' || pending[id]) ? ' disabled' : '') + '>cargar</button>' +
+        '</div>';
+    }).join('') : '<div class="demo-need-row"><span class="chip chip--aqua">' +
+        S.esc((demo.models && demo.models.length) ? demo.models.join(' + ') : 'sin modelos') +
+        '</span>' + S.badgeHTML('ready') + '</div>';
+
+    var state = need.ok
+      ? '<span class="demo-state">listo para abrir</span>'
+      : '<span class="demo-state">falta: ' + S.esc(need.missing.join(', ')) + '</span>';
+
+    return '<article class="demo-card' + (need.ok ? ' is-ready' : '') + '">' +
+      '<span class="demo-index">DEMO ' + index + ' · ' + S.esc((demo.kicker || demo.id || '').toUpperCase()) + '</span>' +
+      '<h3 class="demo-title">' + S.esc(demo.title || demo.id) + '</h3>' +
+      '<p class="demo-tagline">' + S.esc(demo.tagline || '') + '</p>' +
+      '<div class="demo-needs">' + needs + '</div>' +
+      '<div class="demo-foot">' +
+        '<a class="btn' + (need.ok ? ' btn--primary' : '') + '" href="' + S.esc(path) + '">Abrir</a>' +
+        '<span class="mono">' + S.esc(path) + '</span>' + state +
+      '</div>' +
+    '</article>';
+  }
+
+  /* ---------------------------------------------------------------- render */
+
+  function keepFocus(fn) {
+    var active = document.activeElement;
+    var mark = active && active.id ? active.id : (active && active.getAttribute('data-toggle')) || (active && active.getAttribute('data-log')) || null;
+    fn();
+    if (mark) {
+      var sel = active.id ? '#' + active.id : '[data-toggle="' + mark + '"],[data-log="' + mark + '"]';
+      var next = document.querySelector(sel);
+      if (next && next.focus) next.focus();
+    }
+  }
+
+  function render() {
+    var state = lastState;
+    var models = (state && state.models && state.models.length) ? state.models : MODEL_FALLBACK;
+    var byId = {};
+    models.forEach(function (m) { byId[m.id] = m; });
+
+    // estado del hub
+    if (hubOk === false) {
+      $hubState.textContent = 'sin respuesta del hub';
+      $hubDot.className = 'dot is-warn';
+    } else {
+      $hubState.textContent = 'polling 1,5 s';
+      $hubDot.className = 'dot is-on';
+    }
+
+    // RAM
+    if (state && state.ram) {
+      S.ramBar($ram, state.ram);
+      var left = Math.max(0, (state.ram.budget_mb || 0) - (state.ram.used_models_mb || 0));
+      $ramQuick.innerHTML = '<span class="chip">' + (state.ram.available_mb !== undefined
+        ? 'disponible real ' + S.esc(S.fmtMb(state.ram.available_mb)) : 'sin lectura de RAM') + '</span>' +
+        '<span class="chip' + (left > 0 ? ' chip--aqua' : '') + '">dentro del presupuesto ' +
+        S.esc(S.fmtMb(left)) + '</span>';
+      $ramUpdated.textContent = 'actualizado ' + new Date().toLocaleTimeString('es-AR');
+    } else {
+      S.ramBar($ram, { budget_mb: 4000, used_models_mb: 0, available_mb: 4055, total_mb: 15250 });
+      $ramQuick.innerHTML = '<span class="chip">esqueleto del SPEC: todavía no contesta /api/state</span>';
+      $ramUpdated.textContent = '—';
+    }
+
+    // tabla de modelos
+    keepFocus(function () {
+      $rows.innerHTML = models.map(rowHTML).join('');
+    });
+
+    // demos
+    var demos = (state && state.demos && state.demos.length) ? state.demos : DEMO_FALLBACK;
+    $grid.innerHTML = demos.map(function (d, i) {
+      var base = null;
+      DEMO_FALLBACK.forEach(function (f) { if (f.id === d.id || (d.path && f.path === d.path)) base = f; });
+      var demo = {
+        id: d.id, path: d.path, title: d.title, tagline: d.tagline,
+        kicker: d.kicker || (base && base.kicker),
+        any_of: d.any_of !== undefined ? d.any_of : (base && base.any_of),
+        models: (d.models && d.models.length) ? d.models : (base ? base.models : [])
+      };
+      return demoCardHTML(demo, i + 1, byId);
+    }).join('');
+
+    renderNotice();
+  }
+
+  /* --------------------------------------------------------------- acciones */
+
+  function doLoad(id) {
+    if (pending[id]) return;
+    pending[id] = 'load';
+    render();
+    S.loadModel(id).then(function () {
+      delete pending[id];
+      showNotice('Cargando ' + id + ': ya podés abrir la demo que lo pide.', 'ok');
+    }).catch(function (err) {
+      delete pending[id];
+      if (err.reason === 'over_ram' || err.reason === 'ram') {
+        showNotice('No entra en el presupuesto de RAM (' + (err.data.need_mb ? S.fmtMb(err.data.need_mb) + ' que pide' : '?') +
+          ', ' + (err.data.free_mb ? S.fmtMb(err.data.free_mb) + ' libres' : '?') + '). Descargá algo y volvé.', 'warn');
+      } else {
+        showNotice(err.message, 'warn');
+      }
+    }).then(function () { refresh(); });
+  }
+
+  function doUnload(id) {
+    if (pending[id]) return;
+    pending[id] = 'unload';
+    render();
+    S.unloadModel(id).then(function () {
+      delete pending[id];
+      showNotice('Descargado ' + id + ': liberamos su RAM.', 'ok');
+    }).catch(function (err) {
+      delete pending[id];
+      showNotice(err.message, 'warn');
+    }).then(function () { refresh(); });
+  }
+
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest ? ev.target.closest('[data-toggle],[data-load],[data-log]') : null;
+    if (!t) return;
+    if (t.hasAttribute('data-toggle')) {
+      var id = t.getAttribute('data-toggle');
+      var row = $rows.querySelector('tr[data-id="' + id + '"]');
+      var loaded = row && row.classList.contains('is-loaded');
+      if (loaded) doUnload(id); else doLoad(id);
+    } else if (t.hasAttribute('data-load')) {
+      doLoad(t.getAttribute('data-load'));
+    } else if (t.hasAttribute('data-log')) {
+      openLog(t.getAttribute('data-log'));
+    }
+  });
+
+  document.getElementById('log-close').addEventListener('click', closeLog);
+  document.getElementById('log-refresh').addEventListener('click', function () { if (logId) fetchLog(logId); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeLog(); });
+
+  function openLog(id) {
+    logId = id;
+    $logModal.hidden = false;
+    $logTitle.textContent = 'log · ' + id;
+    $logLines.textContent = 'leyendo…';
+    fetchLog(id);
+  }
+
+  function closeLog() {
+    logId = null;
+    $logModal.hidden = true;
+  }
+
+  function fetchLog(id) {
+    S.getModelLog(id, 200).then(function (data) {
+      if (logId !== id) return;
+      var lines = (data && data.lines) || [];
+      $logLines.textContent = lines.length ? lines.join('\n') : '(el log está vacío)';
+      $logLines.scrollTop = $logLines.scrollHeight;
+    }).catch(function (err) {
+      if (logId !== id) return;
+      $logLines.textContent = err.message;
+    });
+  }
+
+  /* ------------------------------------------------------------- polling */
+
+  function refresh() {
+    return S.getState().then(function (state) {
+      lastState = state;
+      hubOk = true;
+      render();
+    }).catch(function () {
+      // Sin hub: mostramos el esqueleto del SPEC y seguimos reintentando.
+      hubOk = false;
+      render();
+    });
+  }
+
+  render();
+  S.poll(refresh, 1500);
+})();
+</script>
+</body>
+</html>

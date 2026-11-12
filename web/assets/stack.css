@@ -1,0 +1,427 @@
+/* ============================================================================
+   stack.css — panel visual del stack (4 capas) + monitor de recursos
+   Todo con tokens del brand kit (--surus-*): radio 3 px, sin sombras,
+   sin rojos ni verdes. Los pasteles van en etiquetas y bordes, nunca en
+   áreas grandes. Tipografía: JetBrains Mono para datos, Inter para explicar.
+   ========================================================================== */
+
+/* Contenedor: fijo abajo a la derecha. Si la página define #stack, ese manda
+   la posición y el panel queda estático adentro. */
+.sx,
+#stack {
+  position: fixed;
+  right: 16px;
+  bottom: 14px;
+  z-index: 45;
+  width: min(560px, calc(100vw - 32px));
+}
+#stack .sx { position: static; width: auto; }
+
+.sx,
+.sx * { box-sizing: border-box; }
+.sx { font-family: var(--surus-font-sans, Inter, system-ui, sans-serif); font-size: 12px; }
+.sx b, .sx i, .sx u, .sx s { font-style: normal; font-weight: inherit; text-decoration: none; }
+
+/* ------------------------------------------------------- botón abrir/cierra */
+
+.sx-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--surus-deep);
+  color: var(--surus-body);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-align: left;
+  cursor: pointer;
+}
+.sx-toggle:hover { border-color: var(--surus-line-2); color: var(--surus-text); }
+.sx-toggle:focus-visible { outline: 1px solid var(--surus-aqua); outline-offset: 1px; }
+.sx-mark { color: var(--surus-aqua); }
+.sx-caret { margin-left: auto; color: var(--surus-muted); }
+.sx-sum { color: var(--surus-muted); }
+.sx.is-open .sx-sum { color: var(--surus-body); }
+
+/* ------------------------------------------------------------------ panel */
+
+.sx-body {
+  margin-bottom: 8px;
+  padding: 12px;
+  max-height: min(74vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surus-deep);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  scrollbar-width: thin;
+  scrollbar-color: var(--surus-line-2) transparent;
+}
+.sx-body[hidden] { display: none; }
+
+.sx-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--surus-line);
+}
+.sx-kicker {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--surus-muted);
+}
+.sx-kicker:first-child { color: var(--surus-aqua); }
+.sx-title {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--surus-text);
+}
+.sx-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.sx-btn {
+  padding: 5px 8px;
+  background: transparent;
+  color: var(--surus-body);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  font-family: var(--surus-font-sans, sans-serif);
+  font-size: 11px;
+  cursor: pointer;
+}
+.sx-btn:hover { color: var(--surus-aqua); border-color: var(--surus-aqua-edge); background: var(--surus-aqua-tint); }
+.sx-btn:focus-visible { outline: 1px solid var(--surus-aqua); outline-offset: 1px; }
+.sx-btn[aria-pressed="true"] { color: var(--surus-sol); border-color: var(--surus-line-2); }
+
+.sx-legend {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-muted);
+}
+.sx.sx-journey .sx-legend { color: var(--surus-sol); }
+
+.sx-h {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--surus-muted);
+  margin-bottom: 6px;
+}
+.sx-sec { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--surus-line); }
+
+/* ----------------------------------------------------- las 4 capas apiladas */
+/* De arriba hacia abajo: app → engine → kernels / runtime → metal.
+   El color de cada capa manda en el borde izquierdo, la etiqueta y los chips. */
+
+.sx-stack {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  margin-top: 12px;
+}
+.sx-layers { display: grid; gap: 7px; min-width: 0; }
+
+.sx-rail { position: relative; }
+.sx-rail::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 4px;
+  bottom: 4px;
+  border-left: 1px dashed var(--surus-line);
+}
+.sx-rail i {
+  position: absolute;
+  left: 5px;
+  top: 2%;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--surus-radius);
+  background: var(--surus-sol);
+  opacity: 0;
+}
+.sx-stack.sx-journey .sx-rail i {
+  opacity: 1;
+  animation: sx-travel 4.6s ease-in-out both;
+}
+
+.sx-layer {
+  --sx-c: var(--surus-line-2);
+  --sx-bg: var(--surus-deep);
+  --sx-hl: var(--surus-aqua-tint);
+  padding: 8px 10px;
+  background: var(--sx-bg);
+  border: 1px solid var(--surus-line);
+  border-left: 3px solid var(--sx-c);
+  border-radius: var(--surus-radius);
+}
+.sx-l-app     { --sx-c: var(--surus-aqua);         --sx-bg: var(--surus-aqua-tint); --sx-hl: rgba(127, 227, 205, .13); }
+.sx-l-engine  { --sx-c: var(--surus-nabla-cyan);   --sx-hl: rgba(2, 164, 176, .16); }
+.sx-l-kernels { --sx-c: var(--surus-sol);          --sx-hl: rgba(223, 208, 155, .13); }
+.sx-l-metal   { --sx-c: var(--surus-area-compras); --sx-hl: rgba(151, 182, 219, .12); }
+
+.sx-lh { display: flex; align-items: baseline; gap: 6px; }
+.sx-tag {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--sx-c);
+}
+.sx-arrow {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-line-2);
+}
+.sx-layer:last-child .sx-arrow { color: transparent; }
+.sx-desc {
+  margin: 4px 0 6px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--surus-body);
+}
+
+/* Chips: borde del color de la capa, fondo neutro. */
+.sx-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.sx-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 6px;
+  background: var(--surus-ink-tint);
+  border: 1px solid var(--surus-line);
+  border-color: color-mix(in srgb, var(--sx-c) 45%, transparent);
+  border-radius: var(--surus-radius);
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--surus-body);
+  overflow-wrap: anywhere;
+}
+.sx-chip b { color: var(--surus-text); font-weight: 500; }
+.sx-chip i {
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--sx-c);
+}
+.sx-chip-ver { background: transparent; }
+.sx-chip-ver b { font-family: var(--surus-font-mono, monospace); font-size: 10px; color: var(--surus-muted); }
+.sx-miss { border-style: dashed; color: var(--surus-muted); }
+
+/* ------------------------------------------- el viaje del pedido (solo CSS) */
+/* El prefijo del prompt baja hasta el metal y los tokens generados suben.
+   Cada banda se ilumina cuando el punto la cruza: al bajar (prefill) y al
+   volver a subir (decode). Sin librerías, una sola pasada por clic. */
+
+.sx-stack.sx-journey .sx-layers > .sx-layer { animation-duration: 4.6s; animation-timing-function: ease-in-out; animation-fill-mode: both; }
+.sx-stack.sx-journey .sx-layers > .sx-layer:nth-child(1) { animation-name: sx-pass-1; }
+.sx-stack.sx-journey .sx-layers > .sx-layer:nth-child(2) { animation-name: sx-pass-2; }
+.sx-stack.sx-journey .sx-layers > .sx-layer:nth-child(3) { animation-name: sx-pass-3; }
+.sx-stack.sx-journey .sx-layers > .sx-layer:nth-child(4) { animation-name: sx-pass-4; }
+
+@keyframes sx-travel {
+  0%   { top: 2%;  background: var(--surus-aqua); }
+  6%   {           background: var(--surus-sol); }
+  44%  { top: 94%; background: var(--surus-sol); }
+  56%  { top: 94%; background: var(--surus-aqua); }
+  100% { top: 2%;  background: var(--surus-aqua); }
+}
+@keyframes sx-pass-1 {
+  0%, 8%     { background: var(--sx-hl); }
+  12%, 88%   { background: var(--sx-bg); }
+  92%, 100%  { background: var(--sx-hl); }
+}
+@keyframes sx-pass-2 {
+  0%, 8%     { background: var(--sx-bg); }
+  12%, 20%   { background: var(--sx-hl); }
+  24%, 76%   { background: var(--sx-bg); }
+  80%, 88%   { background: var(--sx-hl); }
+  92%, 100%  { background: var(--sx-bg); }
+}
+@keyframes sx-pass-3 {
+  0%, 20%    { background: var(--sx-bg); }
+  24%, 32%   { background: var(--sx-hl); }
+  36%, 64%   { background: var(--sx-bg); }
+  68%, 76%   { background: var(--sx-hl); }
+  80%, 100%  { background: var(--sx-bg); }
+}
+@keyframes sx-pass-4 {
+  0%, 38%    { background: var(--sx-bg); }
+  42%, 52%   { background: var(--sx-hl); }
+  56%, 100%  { background: var(--sx-bg); }
+}
+
+.sx-err {
+  margin-top: 8px;
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-muted);
+}
+.sx-note {
+  font-size: 11px;
+  color: var(--surus-muted);
+}
+
+/* ------------------------------------------------- monitor de recursos vivo */
+
+.sx-nums {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sx-nums > div { min-width: 0; }
+.sx-nums b {
+  display: block;
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 21px;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  color: var(--surus-text);
+  overflow-wrap: anywhere;
+}
+.sx-nums i {
+  display: block;
+  margin-top: 3px;
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--surus-muted);
+}
+.sx-nums u {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-muted);
+}
+.sx-n-load b { color: var(--surus-sol); }
+
+/* Barra de RAM segmentada: el ancho total es el presupuesto declarado. */
+.sx-bar {
+  display: flex;
+  height: 18px;
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  overflow: hidden;
+}
+.sx-seg { display: block; height: 100%; background: var(--sx-seg, var(--surus-aqua)); }
+.sx-free { background: var(--surus-ink-tint); }
+
+.sx-legend-ram { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; }
+.sx-leg { display: inline-flex; align-items: baseline; gap: 5px; font-size: 11px; }
+.sx-leg i {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--surus-radius);
+  background: var(--sx-seg, var(--surus-aqua));
+  align-self: center;
+}
+.sx-leg b { color: var(--surus-text); font-weight: 500; }
+.sx-leg u { font-family: var(--surus-font-mono, monospace); font-size: 10.5px; color: var(--surus-text); }
+.sx-leg s { font-family: var(--surus-font-mono, monospace); font-size: 9.5px; color: var(--surus-muted); }
+
+.sx-foot {
+  margin-top: 8px;
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-muted);
+}
+
+/* ----------------------------------------------------- comando de servicio */
+
+.sx-cmd { display: flex; align-items: flex-start; gap: 8px; }
+.sx-cmd code {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 7px 8px;
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--surus-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------ archivos y rutas */
+
+.sx-files { display: flex; flex-wrap: wrap; gap: 5px; }
+.sx-file {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 6px;
+  background: transparent;
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  font-family: inherit;
+  font-size: 10.5px;
+  color: var(--surus-body);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.sx-file:hover { border-color: var(--surus-aqua-edge); background: var(--surus-aqua-tint); }
+.sx-file:hover .sx-path { color: var(--surus-text); }
+.sx-file:focus-visible { outline: 1px solid var(--surus-aqua); outline-offset: 1px; }
+.sx-path { font-family: var(--surus-font-mono, monospace); color: var(--surus-body); }
+.sx-size { font-family: var(--surus-font-mono, monospace); font-size: 9.5px; color: var(--surus-muted); }
+.sx-openable .sx-path { text-decoration: underline dotted var(--surus-line-2); text-underline-offset: 2px; }
+.sx-missing { border-style: dashed; border-color: var(--surus-line-2); opacity: .78; }
+.sx-flag { font-family: var(--surus-font-mono, monospace); font-size: 9.5px; color: var(--surus-muted); }
+.sx-copied { border-color: var(--surus-aqua-edge); background: var(--surus-aqua-tint); }
+.sx-copied .sx-size { color: var(--surus-aqua); }
+
+.sx-hint { margin-top: 7px; font-size: 10.5px; color: var(--surus-muted); }
+
+/* ------------------------------------------------------------ avisos vivos */
+
+.sx-tray {
+  margin-top: 8px;
+  padding: 5px 8px;
+  background: var(--surus-deep);
+  border: 1px solid var(--surus-line);
+  border-left: 3px solid var(--surus-aqua);
+  border-radius: var(--surus-radius);
+  font-family: var(--surus-font-mono, monospace);
+  font-size: 10px;
+  color: var(--surus-body);
+}
+.sx-ta {
+  position: fixed;
+  top: -1000px;
+  left: -1000px;
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------- responsive */
+
+@media (max-width: 720px) {
+  .sx,
+  #stack { right: 8px; left: 8px; bottom: 8px; width: auto; }
+  .sx-body { max-height: 62vh; }
+  .sx-nums { grid-template-columns: 1fr 1fr; }
+  .sx-nums b { font-size: 18px; }
+}
+
+/* Accesibilidad: sin animación, se muestra el estado final del viaje. */
+@media (prefers-reduced-motion: reduce) {
+  .sx-stack.sx-journey .sx-rail i { animation: none; opacity: 1; top: 2%; background: var(--surus-aqua); }
+  .sx-stack.sx-journey .sx-layers > .sx-layer { animation: none; }
+  .sx-stack.sx-journey .sx-layers > .sx-layer:nth-child(1) { background: var(--sx-hl); }
+}

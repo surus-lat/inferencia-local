@@ -1,0 +1,44 @@
+/* SURUS tokens - source: SURUS Brand Kit v9 (02 · Color, 03 · Tipografía, 05 · Componentes).
+   Dark only. No reds or greens: error and waiting states use ink on a 5% tint. */
+:root {
+  /* Ink scale */
+  --surus-ink: #121A20;        /* page background */
+  --surus-deep: #182128;       /* surfaces: cards, windows, panels */
+  --surus-line: #2C3740;       /* borders, dividers */
+  --surus-line-2: #434D55;     /* strokes, dashed borders */
+  --surus-text: #F2F5F7;       /* headlines, primary text */
+  --surus-body: #B7BDC1;       /* subheads, paragraphs */
+  --surus-muted: #7E878E;      /* labels, captions, metadata */
+
+  /* Accents */
+  --surus-aqua: #7FE3CD;                       /* "ours" + what matters; one key phrase per headline */
+  --surus-aqua-tint: rgba(127, 227, 205, .07); /* fill behind our products */
+  --surus-aqua-edge: rgba(127, 227, 205, .45); /* 1px border on aqua-tinted chips */
+  --surus-sol: oklch(0.87 0.065 85);           /* secondary: flow, active step, version, negative metric word */
+  --surus-ink-tint: rgba(242, 245, 247, .05);  /* neutral state fill (blocked / waiting) */
+
+  /* Area pastels - L .87 · C .065 - labels only, never fills for large areas */
+  --surus-area-compras: oklch(0.87 0.065 250);
+  --surus-area-facturacion: oklch(0.87 0.065 20);
+  --surus-area-seguros: oklch(0.87 0.065 205);
+  --surus-area-tesoreria: oklch(0.87 0.065 85);
+  --surus-area-operaciones: oklch(0.87 0.065 175);
+  --surus-area-atencion: oklch(0.87 0.065 150);
+  --surus-area-legales: oklch(0.87 0.065 300);
+  --surus-area-rrhh: oklch(0.87 0.065 340);
+
+  /* Symbol (∇) colors - fixed, never recolor the face */
+  --surus-nabla-cyan: #02A4B0;
+  --surus-nabla-yellow: #DCD878;
+  --surus-nabla-face: #303030;
+
+  /* Type families */
+  --surus-font-sans: 'Inter', system-ui, sans-serif;               /* everything by default */
+  --surus-font-mono: 'JetBrains Mono', ui-monospace, monospace;    /* data, tags, eyebrows, closer */
+  --surus-font-wordmark: 'Orbit', sans-serif;                      /* only the SURUS wordmark */
+  --surus-font-hand: 'Caveat', cursive;                            /* only inside simulated documents */
+
+  /* Shape - radius 3px on everything, no shadows: depth = Deep on Ink + borders */
+  --surus-radius: 3px;
+  --surus-grid: 96px; /* background grid cell */
+}

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es" data-page="llm">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM en vivo · SURUS · inferencia local</title>
+<meta name="description" content="Demo 2: chat con LLM servido local (LFM3-1.7B y MNN-Pocket), con métricas reales de prefill, decode y tokens por segundo. Usable desde pi.">
+<link rel="icon" type="image/svg+xml" href="/assets/surus/surus-symbol.svg">
+<link rel="stylesheet" href="/assets/surus/tokens.css">
+<link rel="stylesheet" href="/assets/surus/fonts.css">
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+/* Estilos propios de la demo · sólo tokens --surus-* del brand kit.
+   Radius 3px, sin sombras, sin rojos ni verdes. */
+
+.model-pick { display: grid; gap: 6px; }
+.select {
+  min-width: 260px;
+  padding: 6px 9px;
+  font-family: var(--surus-font-mono);
+  font-size: 12px;
+  color: var(--surus-text);
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+}
+.select:hover { border-color: var(--surus-line-2); }
+.model-facts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* --------------------------------------------------------------- chat */
+
+.chat {
+  display: grid;
+  gap: 12px;
+  min-height: 220px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 2px 2px 4px;
+}
+.chat-empty {
+  align-self: center;
+  padding: 26px 12px;
+  text-align: center;
+  font-family: var(--surus-font-mono);
+  font-size: 12px;
+  color: var(--surus-muted);
+}
+
+.bubble-row { display: grid; justify-items: start; }
+.bubble-row.is-user { justify-items: end; }
+
+.bubble {
+  max-width: min(92%, 62ch);
+  padding: 10px 13px 11px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--surus-body);
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubble--user {
+  color: var(--surus-text);
+  background: var(--surus-ink-tint);
+  border-color: var(--surus-line-2);
+}
+.bubble--pending {
+  font-family: var(--surus-font-mono);
+  font-size: 12px;
+  color: var(--surus-muted);
+  border-style: dashed;
+}
+.bubble--pending .pending-dots::after {
+  content: '…';
+  animation: surus-blink 1.2s steps(2, end) infinite;
+}
+@keyframes surus-blink { 50% { opacity: .2; } }
+
+.bubble-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--surus-line);
+}
+.bubble-foot .chip { color: var(--surus-muted); }
+.chip--link { cursor: pointer; }
+.chip--link:hover { color: var(--surus-aqua); border-color: var(--surus-aqua-edge); }
+
+/* ------------------------------------------------------- composer */
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+.composer textarea {
+  width: 100%;
+  min-height: 52px;
+  max-height: 180px;
+  padding: 9px 11px;
+  font-family: var(--surus-font-sans);
+  font-size: 14.5px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--surus-text);
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  resize: vertical;
+}
+.composer textarea::placeholder { color: var(--surus-muted); }
+.composer textarea:focus-visible { border-color: var(--surus-aqua-edge); outline-color: var(--surus-aqua); }
+
+/* --------------------------------------------------- razonamiento */
+
+.reason {
+  margin: 0;
+  max-height: 300px;
+  overflow: auto;
+  padding: 10px 12px;
+  font-family: var(--surus-font-mono);
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--surus-muted);
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-radius: var(--surus-radius);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.reason.is-thinking { color: var(--surus-body); border-style: dashed; }
+.reason-empty { color: var(--surus-muted); }
+
+#reason-panel.is-collapsed .panel-body { display: none; }
+
+.turn-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--surus-font-mono);
+  font-size: 11px;
+  color: var(--surus-muted);
+}
+.turn-meta b { font-weight: 400; color: var(--surus-body); }
+
+/* ------------------------------------------------------------ pi */
+
+.pi-cmd {
+  margin: 0;
+  padding: 11px 13px;
+  font-family: var(--surus-font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--surus-body);
+  background: var(--surus-ink);
+  border: 1px solid var(--surus-line);
+  border-left: 3px solid var(--surus-aqua-edge);
+  border-radius: var(--surus-radius);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .composer { grid-template-columns: minmax(0, 1fr); }
+  .select { min-width: 0; width: 100%; }
+}
+</style>
+</head>
+<body data-stack="llm">
+
+<header class="site-header">
+  <a href="/" aria-label="Ir al launcher SURUS">
+    <img class="lockup" src="/assets/surus/surus-lockup-on-dark.svg" alt="SURUS">
+  </a>
+  <span class="header-sep" aria-hidden="true"></span>
+  <span class="header-title">Demo 2 · LLM en vivo</span>
+  <span class="header-note">POST /api/llm/chat · mismo origen, sin CORS</span>
+  <div class="header-right">
+    <span class="header-note"><span class="dot" id="dot-state"></span> <span id="state-text">hub</span></span>
+    <a class="header-link" href="/d/search">Buscar en RI CONICET&nbsp;→</a>
+  </div>
+</header>
+
+<main class="page">
+
+  <div class="page-head">
+    <span class="eyebrow">llama-server · CPU-only · sin nube</span>
+    <h1 class="h1">Chat servido <span class="hl">en tu laptop</span></h1>
+    <p class="lead">Elegí el modelo y preguntá. Cada turno devuelve métricas honestas: prefill, decode y tokens por segundo medidos en esta máquina (i5-10310U, 14&nbsp;GB, sin GPU).</p>
+  </div>
+
+  <div class="two-col">
+
+    <section class="panel" id="chat-panel" aria-label="Chat con modelo local">
+      <div class="panel-head">
+        <span class="panel-title">Chat</span>
+        <div class="panel-tools">
+          <div class="model-pick">
+            <label class="fact-k" for="model-select">Modelo</label>
+            <select id="model-select" class="select"></select>
+          </div>
+          <button class="switch" id="thinking-switch" type="button" role="switch" aria-checked="true" aria-label="Modo thinking">
+            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+            <span class="switch-label">Thinking</span>
+          </button>
+          <button class="btn btn--sm" id="btn-clear" type="button">Limpiar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="model-facts mono" id="model-facts" aria-live="polite"></div>
+        <div class="notice notice--warn" id="llm-notice" hidden></div>
+        <div class="chat" id="chat" aria-live="polite">
+          <div class="chat-empty" id="chat-empty">Sin turnos todavía. Escribí abajo y mirá las métricas de cada respuesta.</div>
+        </div>
+        <form class="composer" id="composer">
+          <textarea id="input" rows="2" placeholder="Preguntá algo sobre inferencia local…"></textarea>
+          <div class="btn-row">
+            <button class="btn btn--primary" id="btn-send" type="submit">Enviar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="aside-col">
+
+      <section class="panel" id="reason-panel" aria-label="Razonamiento del modelo">
+        <div class="panel-head">
+          <span class="panel-title">Razonamiento</span>
+          <span class="badge" id="reason-model-chip">LFM3 · thinking</span>
+          <div class="panel-tools">
+            <button class="btn btn--sm" id="btn-collapse" type="button" aria-expanded="true">Ocultar</button>
+          </div>
+        </div>
+        <div class="panel-body" id="reason-body">
+          <pre class="reason reason-empty" id="reason">LFM3-1.7B es un modelo <em>thinking</em>: primero genera <span class="mono-strong">reasoning_content</span> y después la respuesta final. Acá vas a ver ese razonamiento completo, turno por turno.</pre>
+          <div class="turn-meta" id="turn-meta"></div>
+        </div>
+      </section>
+
+      <section class="panel panel--accent" id="pi-panel" aria-label="Usarlo desde pi">
+        <div class="panel-head">
+          <span class="panel-title">Usarlo desde pi</span>
+          <div class="panel-tools">
+            <button class="btn btn--sm" id="btn-copy" type="button">Copiar</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <pre class="pi-cmd" id="pi-cmd">—</pre>
+          <p class="small" id="pi-note">El hub deja el modelo servido local en <span class="mono-strong">127.0.0.1</span> y expone un proxy OpenAI-compatible en <span class="mono-strong">/v1/proxy/&lt;model_id&gt;</span>: <span class="mono-strong">pi</span> habla con tu laptop, no con la nube.</p>
+        </div>
+      </section>
+
+    </aside>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span class="foot-strong">inferencia-local-demos</span>
+  <span>Demo 2 · LLM en vivo</span>
+  <span class="foot-right">SURUS · hub 127.0.0.1:8180</span>
+</footer>
+
+<script src="/assets/app.js"></script>
+<script src="/assets/pages/text.js"></script>
+</body>
+</html>

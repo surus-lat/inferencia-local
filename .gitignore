@@ -1,0 +1,18 @@
+# Pesos y datos: se bajan con scripts/pull_models.sh y scripts/build_index.py
+models/
+data/
+*.gguf
+*.pt
+
+# Engines compilados en la máquina (se reconstruyen con scripts/build_*.sh)
+vendor/
+
+# Entorno y caches locales (nada escribe en el HOME del usuario)
+.venv/
+.cache/
+.tmp/
+__pycache__/
+*.pyc
+
+# Logs de los backends
+logs/
