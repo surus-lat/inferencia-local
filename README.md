@@ -110,14 +110,6 @@ de KV cache). Si no usás tools, `DSH_CTX_LLM=8192` alcanza y gasta menos RAM.
 Si el modelo no entra en el presupuesto, el proxy devuelve `409` con `reason:"over_ram"`
 y cuántos MB faltan, en vez de mandar la laptop a swap.
 
-## Estética
-
-Marca SURUS: [`surus-lat/brand`](https://github.com/surus-lat/brand), tokens en
-`web/assets/surus/tokens.css`, fuentes Inter + JetBrains Mono locales, ∇ y lockup en
-SVG. Ink `#121A20`, un solo
-acento aqua, radio 3 px, sin sombras y sin rojos ni verdes (los avisos usan tinta
-sobre un tint del 5%). Los datos van en mono; los titulares en Inter light.
-
 ## Dónde está cada cosa
 
 ```
