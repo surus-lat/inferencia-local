@@ -32,7 +32,7 @@
     <p class="eyebrow">Clase UBA · 60 min · hands-on · CPU-only, sin nube</p>
     <h1 class="h1">Subí los modelos al presupuesto de RAM y <span class="hl">abrí la demo</span>.</h1>
     <p class="lead">
-      Los pesos viven en esta laptop: un i5-10310U con 14 GB de RAM y sin GPU. Cargá y descargá
+      Los pesos viven en tu laptop: un CPU x86_64 de 4 núcleos, ~14 GB de RAM y sin GPU. Cargá y descargá
       cada modelo cuando lo necesites, mirá cuánto ocupa de verdad y después entrá a la demo.
       El hub habla sólo con <span class="mono mono-strong">127.0.0.1</span>: nada de tu dato sale de acá.
     </p>
@@ -381,7 +381,7 @@
         S.esc(S.fmtMb(left)) + '</span>';
       $ramUpdated.textContent = 'actualizado ' + new Date().toLocaleTimeString('es-AR');
     } else {
-      S.ramBar($ram, { budget_mb: 4000, used_models_mb: 0, available_mb: 4055, total_mb: 15250 });
+      S.ramBar($ram, { budget_mb: 4000, used_models_mb: 0, available_mb: 4500, total_mb: 14336 });
       $ramQuick.innerHTML = '<span class="chip">esqueleto del SPEC: todavía no contesta /api/state</span>';
       $ramUpdated.textContent = '—';
     }

@@ -21,7 +21,7 @@
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
-  /** 1150 -> "1.150 MB" · 15250 -> "15.250 MB". Siempre en MB, para que los
+  /** 1150 -> "1.150 MB" · 8192 -> "8.192 MB". Siempre en MB, para que los
    *  números de la UI se comparren directo con la tabla del SPEC. */
   function fmtMb(mb) {
     if (mb === null || mb === undefined || isNaN(mb)) return '—';

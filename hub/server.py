@@ -119,12 +119,15 @@ def stack() -> Dict[str, Any]:
     by_id = {m["id"]: m for m in st["models"]}
     cmd = {k: (by_id.get(k, {}).get("metrics") or {}).get("cmd") or "" for k in by_id}
 
+    ram = st.get("ram") or {}
     metal = [
-        f"{cpu.get('name', 'CPU x86_64')} · {cpu.get('cores', 0)} hilos lógicos · "
-        f"AVX2 {'sí' if cpu.get('avx2') else 'no'}",
-        f"{cpu.get('mem_total_mb', 0)} MB de RAM · {cpu.get('gpu', 'sin GPU')}",
+        f"{cpu.get('name', 'CPU de esta máquina')} · {cpu.get('cores') or st['cpu']['cores']} "
+        f"hilos lógicos · AVX2 {'sí' if cpu.get('avx2') else 'no'}",
+        f"{cpu.get('mem_total_mb') or ram.get('total_mb') or '?'} MB de RAM · {cpu.get('gpu', 'sin GPU')}",
         "Sin aceleración por GPU: todo el cómputo va al CPU (ggml / libtorch CPU).",
     ]
+    if not cpu:
+        metal[0] += "  ·  corré scripts/freeze_versions.py para el detalle"
     app_layer = [
         "FastAPI + uvicorn (mismo origen, sin CORS) · hub en 127.0.0.1:8180",
         "Páginas HTML + JS vanilla sin build · cámara y micro con getUserMedia",

@@ -27,7 +27,7 @@ Claves del diseño (RAM de esta máquina: ~4,8 GB disponibles):
   * La metadata se guarda como UN buffer de bytes descomprimido + offsets de línea
     (numpy int64), y sólo se hace json.loads de las k filas devueltas.
 
-MEDICIÓN EN ESTA MÁQUINA (i5-10310U 4C/8T, DDR4, sin GPU; numpy 2.5.4 sobre
+MEDICIÓN DE REFERENCIA (CPU x86_64 4C/8T, DDR4, sin GPU; numpy 2.5.4 sobre
 scipy-openblas64; índice completo = 271.980 filas x 768 float32 = 836 MB mmap;
 batch default 32.768 filas; top-k con argpartition; `scan_ms` = sólo el lazo de
 dot, sin embed de la query; mediana de 7 pasadas con page cache caliente):

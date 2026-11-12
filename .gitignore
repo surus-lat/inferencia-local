@@ -16,3 +16,6 @@ __pycache__/
 
 # Logs de los backends
 logs/
+
+# Snapshot de versiones de TU máquina (lo genera scripts/freeze_versions.py)
+hub/versions.json

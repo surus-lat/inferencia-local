@@ -5,15 +5,17 @@ en **CPU**, en tu máquina, sin nube: una sola webapp raíz (`127.0.0.1:8180`) l
 cinco demos y deja **cargar o descargar cada modelo a pedido**, con un presupuesto de
 RAM que evita que la laptop se ahogue.
 
-Laptop medida: Intel i5-10310U (4 núcleos / 8 hilos), 14 GB de RAM, **sin GPU**
-(solo Intel UHD). Con ~10 GB ya usados por otras aplicaciones quedan ~4,5 GB libres.
+Laptop de referencia: CPU x86_64 de 4 núcleos / 8 hilos, ~14 GB de RAM, **sin GPU**
+(sólo gráficos integrados). Con ~10 GB ya usados por otras aplicaciones quedan
+~4,5 GB libres: por eso hay un presupuesto de RAM.
 
 ## Prender y apagar
 
 ```bash
 cd inferencia-local-demos
-scripts/run_hub.sh                 # hub + 5 webapps en http://127.0.0.1:8180
-python3 .venv/bin/python scripts/smoke.py   # prueba las 5 demos con pesos reales
+python3 scripts/freeze_versions.py        # congela las versiones reales de TU máquina
+scripts/run_hub.sh                        # hub + 5 webapps en http://127.0.0.1:8180
+python3 .venv/bin/python scripts/smoke.py # prueba las 5 demos con pesos reales
 ```
 
 Ctrl-C apaga el hub y **descarga todos los modelos** (los subprocessos de
@@ -25,7 +27,7 @@ Variables útiles (ya tienen default sensato en `scripts/run_hub.sh`):
 |---|---|---|
 | `DSH_RAM_BUDGET_MB` | `4096` | techo de RAM para modelos a la vez |
 | `DSH_THREADS` | `4` | hilos de llama.cpp, parakeet y torch |
-| `DSH_CTX_LLM` | `8192` | contexto de los LLM (`16384` si usás agentes con tools) |
+| `DSH_CTX_LLM` | `16384` | contexto de los LLM (bajalo a `8192` si no usás agentes con tools) |
 | `OPENBLAS_NUM_THREADS` | `2` | gana al default de 8 hilos en el escaneo de coseno |
 
 ## Las cinco demos
@@ -45,7 +47,7 @@ reales, el comando exacto con que se sirve ese modelo, las rutas relativas de su
 archivos y un monitor de RAM/carga que sólo sondea cuando está abierto. Si una carga no entra en el presupuesto,
 avisa cuánto falta en vez de mandar todo a swap.
 
-## Mediciones reales en mi máquina
+## Mediciones reales (CPU, sin GPU)
 
 Números de referencia (con la laptop tranquila; si hay otras apps, empeoran):
 
@@ -97,25 +99,22 @@ Dejalo registrado en `pi` una vez:
 
 ```bash
 python3 scripts/pi_setup.py            # agrega el provider "surus-local" a ~/.pi/agent/models.json
-pi --provider surus-local --model lfm3-1.7b --no-tools -p "¿qué es el prefill?"
-pi --provider surus-local --model mnn-pocket --no-tools -p "¿por qué cuantizar acelera?"
+pi --provider surus-local --model lfm3-1.7b --no-session -p "¿qué es el prefill?"
+pi --provider surus-local --model mnn-pocket --no-session -p "¿por qué cuantizar acelera?"
 ```
 
-Medido con `pi` real: LFM3 1,7B respondió en ~48 s (incluye la carga del modelo y su
-fase de razonamiento; LFM3 es *thinking*) y MNN-Pocket 0.3B en ~8 s.
-
-**Por qué `--no-tools`:** el system prompt de un agente con todas sus tools ya ocupa
-~10.100 tokens. Con el contexto de 8.192 que trae el hub, la petición entra en
-`exceed_context_size_error`. O le bajás las tools a `pi`, o subís el contexto:
-`DSH_CTX_LLM=16384 scripts/run_hub.sh` (paga ~460 MB extra de KV cache).
+Con tools y sin `--no-tools`: el system prompt de un agente con todas sus tools ya
+ocupa ~10.100 tokens, por eso el default de contexto es `16384` (paga ~460 MB extra
+de KV cache). Si no usás tools, `DSH_CTX_LLM=8192` alcanza y gasta menos RAM.
 
 Si el modelo no entra en el presupuesto, el proxy devuelve `409` con `reason:"over_ram"`
 y cuántos MB faltan, en vez de mandar la laptop a swap.
 
 ## Estética
 
-Marca SURUS: `../brand` (clonado del repo), tokens en `web/assets/surus/tokens.css`,
-fuentes Inter + JetBrains Mono locales, ∇ y lockup en SVG. Ink `#121A20`, un solo
+Marca SURUS: [`surus-lat/brand`](https://github.com/surus-lat/brand), tokens en
+`web/assets/surus/tokens.css`, fuentes Inter + JetBrains Mono locales, ∇ y lockup en
+SVG. Ink `#121A20`, un solo
 acento aqua, radio 3 px, sin sombras y sin rojos ni verdes (los avisos usan tinta
 sobre un tint del 5%). Los datos van en mono; los titulares en Inter light.
 
@@ -127,6 +126,7 @@ data/              metadata.parquet (1,03 GB) + índices
 vendor/llama.cpp   engine de LLM/VLM/embeddings (build nativo, Release)
 vendor/transcribe.cpp + vendor/asrtool/live_asr.cpp   worker ASR persistente
 hub/               server.py (FastAPI) · backends.py (carga/RAM) · asr_worker.py · search_index.py
+                   versions.json (lo genera scripts/freeze_versions.py; es de TU máquina)
 web/               launcher + 5 páginas + assets (tokens, fuentes, logos)
 scripts/           run_hub.sh · smoke.py · pull_models.sh · build_index.py · pi_setup.py
 docs/SPEC.md       contrato de API que siguen las páginas

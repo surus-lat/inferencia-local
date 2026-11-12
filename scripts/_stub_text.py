@@ -113,7 +113,7 @@ ANSWER_BY_KEY = [
 ]
 
 GENERIC_ANSWER = (
-    "Buena pregunta para la clase de inferencia local: en esta laptop (i5-10310U, 14 GB, sin GPU) todo "
+    "Buena pregunta para la clase de inferencia local: en una laptop CPU sin GPU todo "
     "pasa por CPU y RAM, así que las dos fases del generativo se notan separadas. El prefill procesa el "
     "prompt por bloques y el decode genera un token a la vez; las métricas de este turno muestran ambas "
     "en crudo. Probá cambiar de modelo o apagar el thinking para ver la diferencia de tiempos."

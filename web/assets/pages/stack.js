@@ -19,7 +19,7 @@
   var TRAY_MS = 4000;
   var DASH = '—';
 
-  /* Nada de /home/marian en la UI: se recorta la raíz del proyecto. */
+  /* Nada de rutas absolutas del usuario en la UI: se recorta la raíz del proyecto. */
   var ROOT_RE = /[^\s"',;]*?inferencia-local-demos\//g;
   var HOME_RE = /\/(?:home|Users|mnt|srv|opt|var)\/[^\s"',;]{0,220}?(?=(?:models|vendor|data|web|hub|scripts)\/)/g;
 

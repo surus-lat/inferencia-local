@@ -5,7 +5,7 @@ Un solo proceso hub controla:
   - un worker ASR persistente (transcribe.cpp / parakeet-ultra)
   - YOLO in-process (ultralytics + torch CPU)
 
-Regla de oro en esta laptop (14 GB, ~4.8 GB disponibles al arrancar):
+Regla de oro en una laptop CPU sin GPU (~14 GB, ~4,8 GB disponibles al arrancar):
 no se carga un modelo si empuja el uso por encima del presupuesto.
 """
 from __future__ import annotations

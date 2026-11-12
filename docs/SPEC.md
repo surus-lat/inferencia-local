@@ -1,7 +1,7 @@
 # Inferencia Local · SURUS — contrato de demos locales
 
 Proyecto: `inferencia-local-demos/` (raíz = `ROOT`).
-Laptop: i5-10310U (4C/8T), 14 GB RAM, **sin GPU**, CPU-only. Todo debe correr en CPU.
+Laptop de referencia: CPU x86_64 4C/8T, ~14 GB RAM, **sin GPU**, CPU-only. Todo debe correr en CPU.
 
 ## Principios
 
